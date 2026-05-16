@@ -20,7 +20,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Mercado Movil'), findsOneWidget);
-    expect(find.text('Cafe premium'), findsOneWidget);
+    expect(find.text('Chaqueta urbana'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Agregar al carrito').first);
     await tester.pump();
@@ -35,10 +35,10 @@ class _FakeProductRepository implements ProductRepository {
     return const [
       Product(
         id: 1,
-        title: 'Cafe premium',
-        description: 'Cafe tostado para pruebas.',
-        price: 12.5,
-        category: 'Bebidas',
+        title: 'Chaqueta urbana',
+        description: 'Chaqueta de prueba para el catalogo.',
+        price: 49.9,
+        category: "men's clothing",
         imageUrl: '',
         rating: 4.7,
       ),

@@ -11,6 +11,16 @@ class ProductService implements ProductRepository {
   ProductService(this._apiClient);
 
   final ApiClient _apiClient;
+  static const Set<String> _clothingCategories = {
+    "men's clothing",
+    "women's clothing",
+  };
+  static const List<String> _nonClothingKeywords = [
+    'backpack',
+    'bag',
+    'purse',
+    'wallet',
+  ];
 
   @override
   Future<List<Product>> fetchProducts() async {
@@ -23,7 +33,16 @@ class ProductService implements ProductRepository {
     return data
         .whereType<Map<String, dynamic>>()
         .map(Product.fromJson)
+        .where(_isClothingProduct)
         .toList();
+  }
+
+  bool _isClothingProduct(Product product) {
+    final title = product.title.toLowerCase();
+    final category = product.category.toLowerCase();
+
+    return _clothingCategories.contains(category) &&
+        !_nonClothingKeywords.any(title.contains);
   }
 
   @override
