@@ -68,6 +68,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
+                          const Text('Subtotal'),
+                          const Spacer(),
+                          Text('\$${widget.cartController.subtotal.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Text('IVA'),
+                          const Spacer(),
+                          Text('\$${widget.cartController.tax.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Text('Envío'),
+                          const Spacer(),
+                          Text('\$${widget.cartController.shipping.toStringAsFixed(2)}'),
+                        ],
+                      ),
+                      const Divider(height: 26),
+                      Row(
+                        children: [
                           const Text('Total'),
                           const Spacer(),
                           Text(

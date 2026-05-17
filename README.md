@@ -13,11 +13,6 @@ flutter run
 
 Por defecto consume datos de prueba desde `https://fakestoreapi.com`.
 
-Para usar tu backend:
-
-```bash
-flutter run --dart-define=API_BASE_URL=https://tu-api.com
-```
 
 La app espera estos endpoints:
 

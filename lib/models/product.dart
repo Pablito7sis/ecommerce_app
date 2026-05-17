@@ -26,7 +26,7 @@ class Product {
       description: json['description'] as String? ?? '',
       price: (json['price'] as num? ?? 0).toDouble(),
       category: json['category'] as String? ?? 'General',
-      imageUrl: json['image'] as String? ?? '',
+      imageUrl: (json['image'] as String?) ?? (json['image_url'] as String?) ?? '',
       rating: ratingData is Map<String, dynamic>
           ? (ratingData['rate'] as num? ?? 0).toDouble()
           : (json['rating'] as num? ?? 0).toDouble(),
