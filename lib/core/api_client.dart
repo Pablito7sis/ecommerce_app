@@ -1,49 +1,60 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:http/http.dart' as http;
 
 class ApiClient {
   ApiClient({required String baseUrl}) : _baseUri = Uri.parse(baseUrl);
 
   final Uri _baseUri;
-  final HttpClient _client = HttpClient();
+  final http.Client _client = http.Client();
 
   Future<dynamic> get(String path) async {
     final response = await _send('GET', path);
-    return _decode(response);
+    return _decode(response.body);
   }
 
   Future<dynamic> post(String path, Map<String, dynamic> body) async {
     final response = await _send('POST', path, body: body);
-    return _decode(response);
+    return _decode(response.body);
   }
 
-  Future<String> _send(
+  Future<http.Response> _send(
     String method,
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    final request = await _client.openUrl(method, _resolve(path));
-    request.headers.contentType = ContentType.json;
+    final uri = _resolve(path);
 
-    if (body != null) {
-      request.write(jsonEncode(body));
+    late http.Response response;
+
+    if (method == 'GET') {
+      response = await _client.get(uri);
+    } else if (method == 'POST') {
+      response = await _client.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+    } else {
+      throw UnsupportedError('Metodo HTTP no soportado: $method');
     }
-
-    final response = await request.close();
-    final responseBody = await response.transform(utf8.decoder).join();
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw ApiException(
         'La API respondio con estado ${response.statusCode}.',
-        responseBody,
+        response.body,
       );
     }
 
-    return responseBody;
+    return response;
   }
 
   Uri _resolve(String path) {
-    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    final cleanPath = path.startsWith('/')
+        ? path.substring(1)
+        : path;
+
     return _baseUri.replace(
       path: [
         if (_baseUri.path.isNotEmpty)
