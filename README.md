@@ -13,11 +13,6 @@ flutter run
 
 Por defecto consume datos de prueba desde `https://fakestoreapi.com`.
 
-Para usar tu backend:
-
-```bash
-flutter run --dart-define=API_BASE_URL=https://tu-api.com
-```
 
 La app espera estos endpoints:
 
@@ -32,6 +27,10 @@ La app espera estos endpoints:
 - `lib/state/cart_controller.dart`: estado del carrito.
 - `lib/screens/`: pantallas de catalogo, detalle, carrito y perfil.
 - `lib/widgets/`: componentes reutilizables.
+
+## Documentacion
+
+- `DOCUMENTO_TECNICO.md`: arquitectura, endpoints, modelo de datos, flujos y ejecucion del proyecto.
 
 ## Validacion
 

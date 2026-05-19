@@ -1,26 +1,18 @@
 import '../core/api_client.dart';
 import '../models/cart_item.dart';
+import '../models/order.dart';
 import '../models/product.dart';
 
 abstract class ProductRepository {
   Future<List<Product>> fetchProducts();
   Future<void> createOrder(List<CartItem> items);
+  Future<List<Order>> fetchOrders();
 }
 
 class ProductService implements ProductRepository {
   ProductService(this._apiClient);
 
   final ApiClient _apiClient;
-  static const Set<String> _clothingCategories = {
-    "men's clothing",
-    "women's clothing",
-  };
-  static const List<String> _nonClothingKeywords = [
-    'backpack',
-    'bag',
-    'purse',
-    'wallet',
-  ];
 
   @override
   Future<List<Product>> fetchProducts() async {
@@ -33,30 +25,46 @@ class ProductService implements ProductRepository {
     return data
         .whereType<Map<String, dynamic>>()
         .map(Product.fromJson)
-        .where(_isClothingProduct)
         .toList();
-  }
-
-  bool _isClothingProduct(Product product) {
-    final title = product.title.toLowerCase();
-    final category = product.category.toLowerCase();
-
-    return _clothingCategories.contains(category) &&
-        !_nonClothingKeywords.any(title.contains);
   }
 
   @override
   Future<void> createOrder(List<CartItem> items) async {
+    final subtotal = items.fold<double>(0, (sum, item) => sum + item.subtotal);
+    final tax = subtotal * 0.16;
+    final shipping = subtotal > 120 ? 0.0 : 8.99;
+
     final payload = {
-      'userId': 1,
       'date': DateTime.now().toIso8601String(),
+      'subtotal': subtotal,
+      'tax': tax,
+      'shipping': shipping,
+      'total': subtotal + tax + shipping,
       'products': items
           .map(
-            (item) => {'productId': item.product.id, 'quantity': item.quantity},
+            (item) => {
+              'product_id': item.product.id,
+              'quantity': item.quantity,
+              'price': item.product.price,
+            },
           )
           .toList(),
     };
 
-    await _apiClient.post('/carts', payload);
+    await _apiClient.post('/orders', payload);
+  }
+
+  @override
+  Future<List<Order>> fetchOrders() async {
+    final data = await _apiClient.get('/orders');
+
+    if (data is! List) {
+      throw const FormatException('La respuesta de pedidos no es una lista.');
+    }
+
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(Order.fromJson)
+        .toList();
   }
 }

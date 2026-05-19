@@ -15,13 +15,28 @@ class CartController extends ChangeNotifier {
   bool get isCheckingOut => _isCheckingOut;
   int get totalItems =>
       _items.values.fold(0, (sum, item) => sum + item.quantity);
-  double get total => _items.values.fold(0, (sum, item) => sum + item.subtotal);
+  double get subtotal => _items.values.fold(0, (sum, item) => sum + item.subtotal);
+  double get tax => subtotal * 0.16;
+  double get shipping => subtotal > 120 ? 0 : 8.99;
+  double get total => subtotal + tax + shipping;
 
-  void add(Product product) {
+  void add(Product product, {int quantity = 1}) {
     final current = _items[product.id];
     _items[product.id] = current == null
-        ? CartItem(product: product, quantity: 1)
-        : current.copyWith(quantity: current.quantity + 1);
+        ? CartItem(product: product, quantity: quantity)
+        : current.copyWith(quantity: current.quantity + quantity);
+    notifyListeners();
+  }
+
+  void setQuantity(int productId, int quantity) {
+    if (quantity <= 0) {
+      _items.remove(productId);
+    } else {
+      final current = _items[productId];
+      if (current != null) {
+        _items[productId] = current.copyWith(quantity: quantity);
+      }
+    }
     notifyListeners();
   }
 
