@@ -31,11 +31,22 @@ void main() {
 
     expect(find.text('Mercado Móvil'), findsOneWidget);
     expect(find.text('Chaqueta urbana'), findsOneWidget);
+    expect(find.text('Pantalones'), findsWidgets);
 
-    await tester.tap(find.byTooltip('Agregar al carrito').first);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Pantalones'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pantalón denim'), findsOneWidget);
+    expect(find.text('Chaqueta urbana'), findsNothing);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -350));
+    await tester.pumpAndSettle();
+
+    final addButton = find.byTooltip('Agregar al carrito').first;
+    await tester.tap(addButton);
     await tester.pump();
 
-    expect(find.text('1'), findsOneWidget);
+    expect(cartController.totalItems, 1);
   });
 }
 
@@ -48,9 +59,18 @@ class _FakeProductRepository implements ProductRepository {
         title: 'Chaqueta urbana',
         description: 'Chaqueta de prueba para el catálogo.',
         price: 49.9,
-        category: "men's clothing",
+        category: 'Abrigos',
         imageUrl: '',
         rating: 4.7,
+      ),
+      Product(
+        id: 2,
+        title: 'Pantalón denim',
+        description: 'Pantalón de prueba para filtrar el catálogo.',
+        price: 39.9,
+        category: 'Pantalones',
+        imageUrl: '',
+        rating: 4.5,
       ),
     ];
   }

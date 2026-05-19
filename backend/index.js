@@ -123,16 +123,9 @@ function isClothingCategory(category) {
   return normalized.includes("men's") || normalized.includes("women's");
 }
 
-function isActualClothing(title, description) {
-  const combined = (String(title || '') + ' ' + String(description || '')).toLowerCase();
-  
-  // Clothing items we want
-  const clothingKeywords = /(shirt|t-shirt|tee|polo|blouse|top|sweater|sweatshirt|hoodie|jacket|coat|cardigan|vest|dress|skirt|pants|jeans|trouser|short|bermuda|pant|tank|camiseta|camisa|pantalón|sudadera|chaqueta|abrigo|vestido|falda)/;
-  
-  // Exclude accessories and non-clothing
-  const excludedKeywords = /(bag|backpack|purse|wallet|belt|hat|cap|shoe|boot|sneaker|sock|jewelry|watch|ring|necklace|bracelet|earring|glove|scarf|tie|handkerchief|luggage|tote|satchel|clutch|briefcase|carrier|case)/;
-  
-  return clothingKeywords.test(combined) && !excludedKeywords.test(combined);
+function isAccessoryProduct(title, description) {
+  const combined = `${title || ''} ${description || ''}`.toLowerCase();
+  return /\b(bag|backpack|purse|wallet|belt|hat|cap|shoe|boot|sneaker|sock|jewelry|watch|ring|necklace|bracelet|earring|glove|scarf|tie|handkerchief|luggage|tote|satchel|clutch|briefcase|carrier|case)\b/.test(combined);
 }
 
 function translateText(text) {
@@ -219,7 +212,7 @@ function getCategoryFromTitle(title, category) {
   }
   
   // Pants and bottoms
-  if (/(pants|jeans|trouser|shorts|short|bermuda|pant|pantalón)/.test(titleLower)) {
+  if (/(pants|jeans|trouser|shorts|bermuda|pant|pantalón)/.test(titleLower)) {
     return 'Pantalones';
   }
   
@@ -229,12 +222,12 @@ function getCategoryFromTitle(title, category) {
   }
   
   // By gender
-  if (categoryLower.includes('men')) {
-    return 'Hombre';
-  }
-  
-  if (categoryLower.includes('women')) {
+  if (categoryLower.includes("women's")) {
     return 'Mujer';
+  }
+
+  if (categoryLower.includes("men's")) {
+    return 'Hombre';
   }
   
   return null;
@@ -244,8 +237,8 @@ function normalizeFakeStoreProduct(product) {
   if (!isClothingCategory(product.category)) {
     return null;
   }
-  
-  if (!isActualClothing(product.title, product.description)) {
+
+  if (isAccessoryProduct(product.title, product.description)) {
     return null;
   }
   
@@ -304,8 +297,69 @@ app.use(express.json());
 
 app.get('/', (req, res) => {
   res.json({
-    message: 'Ecommerce backend API está activo. Usa los endpoints /products, /auth/login, /orders, etc.',
+    message: 'Ecommerce backend API está activo',
+    endpoints: {
+      auth: {
+        'GET /auth/login?email=...&password=...': 'Login de usuario',
+        'GET /auth/register?first_name=...&last_name=...&username=...&email=...&password=...': 'Registro de usuario',
+        'POST /auth/login': 'Login (con JSON body)',
+        'POST /auth/register': 'Registro (con JSON body)',
+        'POST /auth/forgot-password': 'Solicitar reset de contraseña',
+        'POST /auth/reset-password': 'Resetear contraseña'
+      },
+      users: {
+        'GET /users': 'Listar usuarios registrados sin contraseñas',
+        'GET /get/users': 'Listar usuarios registrados sin contraseñas',
+        'GET /users/me': 'Obtener perfil (requiere token)',
+        'POST /users/me': 'Actualizar perfil (requiere token)',
+        'POST /users/me/password': 'Cambiar contraseña (requiere token)'
+      },
+      products: {
+        'GET /products': 'Listar todos los productos',
+        'GET /get/products': 'Listar todos los productos'
+      },
+      orders: {
+        'GET /get/orders': 'Listar órdenes guardadas para revisión',
+        'GET /orders': 'Listar órdenes del usuario (requiere token)',
+        'POST /orders': 'Crear nueva orden (requiere token)'
+      }
+    }
   });
+});
+
+app.get('/auth/register', async (req, res) => {
+  const { first_name, last_name, username, email, password } = req.query;
+  if (!first_name || !last_name || !username || !email || !password) {
+    return res.status(400).json({ message: 'Faltan datos de registro (usa ?first_name=...&last_name=...&username=...&email=...&password=...)' });
+  }
+
+  const db = openDb();
+  try {
+    const existingEmail = await get(db, 'SELECT id FROM users WHERE email = ?', [email]);
+    if (existingEmail) {
+      return res.status(400).json({ message: 'El correo electrónico ya está registrado.' });
+    }
+
+    const existingUsername = await get(db, 'SELECT id FROM users WHERE username = ?', [username]);
+    if (existingUsername) {
+      return res.status(400).json({ message: 'El nombre de usuario ya está en uso.' });
+    }
+
+    const password_hash = bcrypt.hashSync(password, 10);
+    const avatar_url = `https://ui-avatars.com/api/?name=${encodeURIComponent(first_name + ' ' + last_name)}&background=7EC8C9&color=ffffff`;
+    const result = await run(db,
+      'INSERT INTO users (first_name, last_name, username, email, password_hash, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
+      [first_name, last_name, username, email, password_hash, avatar_url],
+    );
+    const user = getUserRow(await get(db, 'SELECT * FROM users WHERE id = ?', [result.lastID]));
+    const token = createToken(user.id);
+    res.json({ token, user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  } finally {
+    db.close();
+  }
 });
 
 app.post('/auth/register', async (req, res) => {
@@ -333,6 +387,29 @@ app.post('/auth/register', async (req, res) => {
       [first_name, last_name, username, email, password_hash, avatar_url],
     );
     const user = getUserRow(await get(db, 'SELECT * FROM users WHERE id = ?', [result.lastID]));
+    const token = createToken(user.id);
+    res.json({ token, user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  } finally {
+    db.close();
+  }
+});
+
+app.get('/auth/login', async (req, res) => {
+  const { email, password } = req.query;
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Faltan credenciales (usa ?email=...&password=...)' });
+  }
+
+  const db = openDb();
+  try {
+    const row = await get(db, 'SELECT * FROM users WHERE email = ? OR username = ?', [email, email]);
+    if (!row || !bcrypt.compareSync(password, row.password_hash)) {
+      return res.status(401).json({ message: 'Credenciales incorrectas' });
+    }
+    const user = getUserRow(row);
     const token = createToken(user.id);
     res.json({ token, user });
   } catch (error) {
@@ -414,6 +491,22 @@ app.post('/auth/reset-password', async (req, res) => {
   }
 });
 
+app.get(['/users', '/get/users'], async (req, res) => {
+  const db = openDb();
+  try {
+    const rows = await all(
+      db,
+      'SELECT id, first_name, last_name, username, email, avatar_url FROM users ORDER BY id',
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  } finally {
+    db.close();
+  }
+});
+
 app.get('/users/me', authMiddleware, async (req, res) => {
   const db = openDb();
   try {
@@ -474,7 +567,7 @@ app.post('/users/me/password', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/products', async (req, res) => {
+app.get(['/products', '/get/products'], async (req, res) => {
   const db = openDb();
   try {
     const rows = await all(
@@ -490,6 +583,38 @@ app.get('/products', async (req, res) => {
       image_url: row.image_url,
       rating: row.rating,
     })));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  } finally {
+    db.close();
+  }
+});
+
+app.get('/get/orders', async (req, res) => {
+  const db = openDb();
+  try {
+    const orders = await all(db, 'SELECT * FROM orders ORDER BY date DESC');
+    const result = [];
+    for (const order of orders) {
+      const items = await all(
+        db,
+        'SELECT product_id, quantity, price FROM order_items WHERE order_id = ?',
+        [order.id],
+      );
+      result.push({
+        id: order.id,
+        user_id: order.user_id,
+        date: order.date,
+        status: order.status,
+        subtotal: order.subtotal,
+        tax: order.tax,
+        shipping: order.shipping,
+        total: order.total,
+        items,
+      });
+    }
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error en el servidor' });

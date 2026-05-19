@@ -69,7 +69,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     final cartController = context.read<CartController>();
@@ -82,7 +81,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
             tooltip: 'Recargar',
             onPressed: () {
               setState(() {
-                _productsFuture = context.read<ProductRepository>().fetchProducts();
+                _productsFuture = context
+                    .read<ProductRepository>()
+                    .fetchProducts();
               });
             },
             icon: const Icon(Icons.refresh),
@@ -100,26 +101,43 @@ class _CatalogScreenState extends State<CatalogScreen> {
             return _ErrorState(
               onRetry: () {
                 setState(() {
-                  _productsFuture = context.read<ProductRepository>().fetchProducts();
+                  _productsFuture = context
+                      .read<ProductRepository>()
+                      .fetchProducts();
                 });
               },
             );
           }
 
           final products = snapshot.data ?? [];
-          final categories = const ['Todos', 'Hombre', 'Mujer', 'Abrigos', 'Camisas'];
+          final categories = [
+            'Todos',
+            ...{
+              for (final product in products)
+                if (product.category.trim().isNotEmpty) product.category.trim(),
+            }.toList()..sort(),
+          ];
 
           final filteredProducts = products.where((product) {
-            final searchText = '${product.title} ${product.category}'.toLowerCase();
-            final categoryMatch = _selectedCategory == 'Todos' || product.category == _selectedCategory;
-            final searchMatch = searchText.contains(_query.toLowerCase());
+            final productCategory = product.category.trim();
+            final searchText =
+                '${product.title} ${product.description} $productCategory'
+                    .toLowerCase();
+            final categoryMatch =
+                _selectedCategory == 'Todos' ||
+                productCategory == _selectedCategory;
+            final searchMatch = searchText.contains(
+              _query.trim().toLowerCase(),
+            );
             return categoryMatch && searchMatch;
           }).toList();
 
           return RefreshIndicator(
             onRefresh: () async {
               setState(() {
-                _productsFuture = context.read<ProductRepository>().fetchProducts();
+                _productsFuture = context
+                    .read<ProductRepository>()
+                    .fetchProducts();
               });
               await _productsFuture;
             },
@@ -140,7 +158,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           itemBuilder: (context, index) {
                             final item = _banners[index];
                             return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               decoration: BoxDecoration(
                                 color: item.color,
                                 borderRadius: BorderRadius.circular(20),
@@ -149,14 +169,20 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(item.title,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(fontWeight: FontWeight.bold)),
+                                  Text(
+                                    item.title,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
                                   const SizedBox(height: 10),
-                                  Text(item.subtitle,
-                                      style: Theme.of(context).textTheme.bodyLarge),
+                                  Text(
+                                    item.subtitle,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge,
+                                  ),
                                 ],
                               ),
                             );
@@ -175,7 +201,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
                             decoration: BoxDecoration(
                               color: _activeBanner == index
                                   ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).colorScheme.primary.withAlpha(102),
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.primary.withAlpha(102),
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
@@ -205,7 +233,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           scrollDirection: Axis.horizontal,
                           itemCount: categories.length,
-                          separatorBuilder: (context, index) => const SizedBox(width: 10),
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 10),
                           itemBuilder: (context, index) {
                             final category = categories[index];
                             final selected = _selectedCategory == category;
@@ -253,12 +282,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     sliver: SliverGrid.builder(
                       itemCount: filteredProducts.length,
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 260,
-                        mainAxisExtent: 306,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 260,
+                            mainAxisExtent: 306,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                          ),
                       itemBuilder: (context, index) {
                         final product = filteredProducts[index];
                         return ProductCard(
@@ -266,14 +296,17 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           onOpen: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => ProductDetailScreen(product: product),
+                                builder: (_) =>
+                                    ProductDetailScreen(product: product),
                               ),
                             );
                           },
                           onAdd: () {
                             cartController.add(product);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Producto agregado al carrito')),
+                              const SnackBar(
+                                content: Text('Producto agregado al carrito'),
+                              ),
                             );
                           },
                         );
