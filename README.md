@@ -28,6 +28,10 @@ La app espera estos endpoints:
 - `lib/screens/`: pantallas de catalogo, detalle, carrito y perfil.
 - `lib/widgets/`: componentes reutilizables.
 
+## Documentacion
+
+- `DOCUMENTO_TECNICO.md`: arquitectura, endpoints, modelo de datos, flujos y ejecucion del proyecto.
+
 ## Validacion
 
 ```bash
