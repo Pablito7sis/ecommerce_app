@@ -50,11 +50,11 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 INSERT OR IGNORE INTO products (id, title, description, price, category, image_url, rating) VALUES
-  (1, 'Camiseta de lino pastel', 'Camiseta ligera y fresca, ideal para usar todo el día con estilo suave.', 24.99, 'Ropa', 'https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg', 4.5),
-  (2, 'Bolso mochila elegante', 'Bolso con múltiples compartimentos para trabajo y fin de semana.', 52.00, 'Accesorios', 'https://fakestoreapi.com/img/71li-ujtlUL._AC_UX679_.jpg', 4.3),
-  (3, 'Zapatillas deportivas', 'Zapatillas cómodas para caminar y deportes ligeros.', 71.85, 'Calzado', 'https://fakestoreapi.com/img/61pHAEJ4NML._AC_UX679_.jpg', 4.2),
-  (4, 'Auriculares inalámbricos', 'Sonido nítido con cancelación de ruido y gran autonomía.', 34.99, 'Electrónica', 'https://fakestoreapi.com/img/61U7T1koQqL._AC_SX679_.jpg', 4.1),
-  (5, 'Reloj minimalista', 'Reloj con diseño minimalista y correa suave de cuero.', 87.99, 'Accesorios', 'https://fakestoreapi.com/img/71YAIFU48IL._AC_UX679_.jpg', 4.4),
-  (6, 'Suéter suave', 'Suéter acogedor en tonos pastel, cómodo para cualquier ocasión.', 45.50, 'Ropa', 'https://fakestoreapi.com/img/71-3HjGNDUL._AC_UX679_.jpg', 4.6),
-  (7, 'Bolso de mano', 'Bolso femenino elegante para el día a día y eventos especiales.', 33.99, 'Accesorios', 'https://fakestoreapi.com/img/71VZzC/upload.jpg', 4.0),
-  (8, 'Chaqueta deportiva', 'Chaqueta ligera para entrenar o pasear con estilo deportivo.', 55.99, 'Ropa', 'https://fakestoreapi.com/img/71HblAHs5xL._AC_UY879_-2.jpg', 4.7);
+  (1, 'Camiseta de manga corta para hombre', 'Camiseta cómoda de algodón con corte entallado, ideal para el día a día.', 24.99, 'Camisas', 'https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg', 4.5),
+  (2, 'Pantalón jeans para mujer', 'Jeans ajustados con acabado clásico y tejido resistente.', 39.99, 'Pantalones', 'https://fakestoreapi.com/img/71li-ujtlUL._AC_UX679_.jpg', 4.3),
+  (3, 'Chaqueta ligera de hombre', 'Chaqueta deportiva con capucha, perfecta para clima fresco.', 55.99, 'Abrigos', 'https://fakestoreapi.com/img/71HblAHs5xL._AC_UY879_-2.jpg', 4.7),
+  (4, 'Suéter de mujer', 'Suéter suave de punto con un estilo cómodo y elegante.', 45.50, 'Abrigos', 'https://fakestoreapi.com/img/71-3HjGNDUL._AC_UX679_.jpg', 4.6),
+  (5, 'Camisa formal para hombre', 'Camisa de manga larga para ocasiones especiales y oficina.', 32.99, 'Camisas', 'https://fakestoreapi.com/img/71YAIFU48IL._AC_UX679_.jpg', 4.4),
+  (6, 'Pantalones cortos casual para mujer', 'Shorts ligeros y cómodos para uso diario en verano.', 29.99, 'Pantalones', 'https://fakestoreapi.com/img/61pHAEJ4NML._AC_UX679_.jpg', 4.2),
+  (7, 'Abrigo de invierno para mujer', 'Abrigo cálido con forro suave para los días fríos.', 69.99, 'Abrigos', 'https://fakestoreapi.com/img/71VZzC/upload.jpg', 4.9),
+  (8, 'Pantalón deportivo para hombre', 'Pantalón ligero con elasticidad para entrenamientos y descanso.', 34.99, 'Pantalones', 'https://fakestoreapi.com/img/61U7T1koQqL._AC_SX679_.jpg', 4.1);

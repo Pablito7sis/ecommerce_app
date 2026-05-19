@@ -37,11 +37,7 @@ async function initDb() {
 
   const db = openDb();
   try {
-    const row = await get(db, 'SELECT COUNT(*) AS count FROM products');
-    const productCount = row?.count ?? 0;
-    if (process.env.USE_FAKESTORE === '1' || productCount === 0) {
-      await syncProductsFromFakeStore(db);
-    }
+    await syncProductsFromFakeStore(db);
   } catch (error) {
     console.error('Error al inicializar productos:', error);
   } finally {
@@ -88,12 +84,16 @@ async function syncProductsFromFakeStore(db) {
       throw new Error('Fakestore API returned invalid product list.');
     }
 
-    const insert = await db.prepare(
+    await run(db, 'DELETE FROM products');
+
+    const insert = db.prepare(
       'INSERT OR REPLACE INTO products (id, title, description, price, category, image_url, rating) VALUES (?, ?, ?, ?, ?, ?, ?)',
     );
 
     for (const product of products) {
       const normalized = normalizeFakeStoreProduct(product);
+      if (!normalized) continue;
+
       await new Promise((resolve, reject) => {
         insert.run(
           normalized.id,
@@ -118,14 +118,149 @@ async function syncProductsFromFakeStore(db) {
   }
 }
 
+function isClothingCategory(category) {
+  const normalized = String(category).toLowerCase();
+  return normalized.includes("men's") || normalized.includes("women's");
+}
+
+function isActualClothing(title, description) {
+  const combined = (String(title || '') + ' ' + String(description || '')).toLowerCase();
+  
+  // Clothing items we want
+  const clothingKeywords = /(shirt|t-shirt|tee|polo|blouse|top|sweater|sweatshirt|hoodie|jacket|coat|cardigan|vest|dress|skirt|pants|jeans|trouser|short|bermuda|pant|tank|camiseta|camisa|pantalón|sudadera|chaqueta|abrigo|vestido|falda)/;
+  
+  // Exclude accessories and non-clothing
+  const excludedKeywords = /(bag|backpack|purse|wallet|belt|hat|cap|shoe|boot|sneaker|sock|jewelry|watch|ring|necklace|bracelet|earring|glove|scarf|tie|handkerchief|luggage|tote|satchel|clutch|briefcase|carrier|case)/;
+  
+  return clothingKeywords.test(combined) && !excludedKeywords.test(combined);
+}
+
+function translateText(text) {
+  if (!text) return '';
+  
+  let translated = String(text)
+    .replace(/Men's Clothing/gi, 'Ropa para hombre')
+    .replace(/Women's Clothing/gi, 'Ropa para mujer')
+    .replace(/jacket/gi, 'chaqueta')
+    .replace(/coat/gi, 'abrigo')
+    .replace(/hoodie/gi, 'sudadera')
+    .replace(/sweatshirt/gi, 'sudadera')
+    .replace(/cardigan/gi, 'cardigan')
+    .replace(/sweater/gi, 'suéter')
+    .replace(/polo/gi, 'polo')
+    .replace(/shirt/gi, 'camisa')
+    .replace(/blouse/gi, 'blusa')
+    .replace(/t-shirt/gi, 'camiseta')
+    .replace(/tee/gi, 'camiseta')
+    .replace(/top/gi, 'top')
+    .replace(/tank/gi, 'camiseta')
+    .replace(/pants/gi, 'pantalón')
+    .replace(/jeans/gi, 'pantalón')
+    .replace(/trouser/gi, 'pantalón')
+    .replace(/shorts/gi, 'short')
+    .replace(/short/gi, 'short')
+    .replace(/bermuda/gi, 'bermuda')
+    .replace(/dress/gi, 'vestido')
+    .replace(/skirt/gi, 'falda')
+    .replace(/vest/gi, 'chaleco')
+    .replace(/cotton/gi, 'algodón')
+    .replace(/polyester/gi, 'poliéster')
+    .replace(/slim/gi, 'entallado')
+    .replace(/classic/gi, 'clásico')
+    .replace(/regular/gi, 'regular')
+    .replace(/fit/gi, 'ajuste')
+    .replace(/100%/gi, '100%')
+    .replace(/soft/gi, 'suave')
+    .replace(/lightweight/gi, 'ligero')
+    .replace(/breathable/gi, 'transpirable')
+    .replace(/comfortable/gi, 'cómodo')
+    .replace(/perfect/gi, 'perfecto')
+    .replace(/ideal/gi, 'ideal')
+    .replace(/stylish/gi, 'elegante')
+    .replace(/casual/gi, 'casual')
+    .replace(/formal/gi, 'formal')
+    .replace(/everyday/gi, 'diario')
+    .replace(/women's/gi, 'de mujer')
+    .replace(/men's/gi, 'de hombre')
+    .replace(/summer/gi, 'de verano')
+    .replace(/winter/gi, 'de invierno')
+    .replace(/spring/gi, 'de primavera');
+  
+  translated = translated.replace(/\s+/g, ' ').trim();
+  
+  if (translated.length === 0) {
+    return 'Descripción de prenda.';
+  }
+  
+  if (!translated.endsWith('.')) {
+    translated += '.';
+  }
+  
+  return translated
+    .split('. ')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0)
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join('. ');
+}
+
+function getCategoryFromTitle(title, category) {
+  const titleLower = String(title || '').toLowerCase();
+  const categoryLower = String(category || '').toLowerCase();
+  
+  // Jackets and outerwear
+  if (/(jacket|coat|hoodie|cardigan|vest|sweater|sweatshirt)/.test(titleLower)) {
+    return 'Abrigos';
+  }
+  
+  // Shirts and tops
+  if (/(shirt|blouse|polo|tee|t-shirt|top|tank|camiseta|camisa|blusa)/.test(titleLower)) {
+    return 'Camisas';
+  }
+  
+  // Pants and bottoms
+  if (/(pants|jeans|trouser|shorts|short|bermuda|pant|pantalón)/.test(titleLower)) {
+    return 'Pantalones';
+  }
+  
+  // Dresses and skirts for women
+  if (/(dress|skirt|vestido|falda)/.test(titleLower)) {
+    return categoryLower.includes('women') ? 'Mujer' : 'Mujer';
+  }
+  
+  // By gender
+  if (categoryLower.includes('men')) {
+    return 'Hombre';
+  }
+  
+  if (categoryLower.includes('women')) {
+    return 'Mujer';
+  }
+  
+  return null;
+}
+
 function normalizeFakeStoreProduct(product) {
+  if (!isClothingCategory(product.category)) {
+    return null;
+  }
+  
+  if (!isActualClothing(product.title, product.description)) {
+    return null;
+  }
+  
+  const categoryLabel = getCategoryFromTitle(product.title, product.category);
+  if (!categoryLabel) {
+    return null;
+  }
+
   const ratingData = product.rating;
   return {
     id: Number(product.id) || 0,
-    title: product.title || 'Producto sin nombre',
-    description: product.description || '',
+    title: translateText(product.title || 'Prenda'),
+    description: translateText(product.description || ''),
     price: Number(product.price) || 0,
-    category: product.category || 'General',
+    category: categoryLabel,
     image_url: product.image || product.image_url || '',
     rating: typeof ratingData === 'object' ? Number(ratingData.rate) || 0 : Number(ratingData) || 0,
   };
@@ -181,9 +316,14 @@ app.post('/auth/register', async (req, res) => {
 
   const db = openDb();
   try {
-    const existing = await get(db, 'SELECT id FROM users WHERE email = ? OR username = ?', [email, username]);
-    if (existing) {
-      return res.status(400).json({ message: 'El correo o usuario ya existe.' });
+    const existingEmail = await get(db, 'SELECT id FROM users WHERE email = ?', [email]);
+    if (existingEmail) {
+      return res.status(400).json({ message: 'El correo electrónico ya está registrado.' });
+    }
+
+    const existingUsername = await get(db, 'SELECT id FROM users WHERE username = ?', [username]);
+    if (existingUsername) {
+      return res.status(400).json({ message: 'El nombre de usuario ya está en uso.' });
     }
 
     const password_hash = bcrypt.hashSync(password, 10);
@@ -337,7 +477,10 @@ app.post('/users/me/password', authMiddleware, async (req, res) => {
 app.get('/products', async (req, res) => {
   const db = openDb();
   try {
-    const rows = await all(db, 'SELECT * FROM products');
+    const rows = await all(
+      db,
+      "SELECT * FROM products WHERE category IN ('Hombre','Mujer','Camisas','Pantalones','Abrigos') ORDER BY id",
+    );
     res.json(rows.map((row) => ({
       id: row.id,
       title: row.title,

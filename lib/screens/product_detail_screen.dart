@@ -19,6 +19,45 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _quantity = 1;
 
+  List<Widget> _buildDescriptionLines(BuildContext context) {
+    final description = widget.product.description.trim();
+    if (description.isEmpty) {
+      return [
+        Text(
+          'No hay una descripción disponible.',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ];
+    }
+
+    final sentences = description.split(RegExp(r'(\.\s+)')).map((segment) => segment.trim()).where((segment) => segment.isNotEmpty).toList();
+    if (sentences.length <= 1) {
+      return [
+        Text(description, style: Theme.of(context).textTheme.bodyMedium),
+      ];
+    }
+
+    return sentences
+        .map(
+          (sentence) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('• ', style: Theme.of(context).textTheme.bodyMedium),
+                Expanded(
+                  child: Text(
+                    sentence.replaceAll(RegExp(r'\.+$'), ''),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartController = context.read<CartController>();
@@ -111,10 +150,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   Text('Descripción', style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 10),
-                  Text(
-                    widget.product.description,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  ..._buildDescriptionLines(context),
                 ],
               ),
             ),

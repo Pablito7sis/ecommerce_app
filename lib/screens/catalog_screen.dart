@@ -107,10 +107,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           }
 
           final products = snapshot.data ?? [];
-          final categories = [
-            'Todos',
-            ...{for (final product in products) product.category},
-          ];
+          final categories = const ['Todos', 'Hombre', 'Mujer', 'Abrigos', 'Camisas'];
 
           final filteredProducts = products.where((product) {
             final searchText = '${product.title} ${product.category}'.toLowerCase();
@@ -135,6 +132,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       SizedBox(
                         height: 150,
                         child: PageView.builder(
+                          controller: _pageController,
                           onPageChanged: (index) {
                             setState(() => _activeBanner = index);
                           },
@@ -177,7 +175,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                             decoration: BoxDecoration(
                               color: _activeBanner == index
                                   ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                                  : Theme.of(context).colorScheme.primary.withAlpha(102),
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
@@ -207,7 +205,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           scrollDirection: Axis.horizontal,
                           itemCount: categories.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 10),
+                          separatorBuilder: (context, index) => const SizedBox(width: 10),
                           itemBuilder: (context, index) {
                             final category = categories[index];
                             final selected = _selectedCategory == category;

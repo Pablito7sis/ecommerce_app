@@ -123,20 +123,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     if (!_formKey.currentState!.validate()) {
                                       return;
                                     }
+                                    final authController = context.read<AuthController>();
+                                    final messenger = ScaffoldMessenger.of(context);
                                     try {
-                                      await context.read<AuthController>().updateProfile(
+                                      await authController.updateProfile(
                                             firstName: _firstNameController.text.trim(),
                                             lastName: _lastNameController.text.trim(),
                                             username: _usernameController.text.trim(),
                                           );
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        messenger.showSnackBar(
                                           const SnackBar(content: Text('Perfil actualizado correctamente.')),
                                         );
                                       }
                                     } catch (error) {
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        messenger.showSnackBar(
                                           SnackBar(content: Text(error.toString())),
                                         );
                                       }
@@ -154,6 +156,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           OutlinedButton(
                             onPressed: authController.isLoading ? null : () => _showPasswordSheet(context),
                             child: const Text('Cambiar contraseña'),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: authController.isLoading
+                                ? null
+                                : () async {
+                                    await context.read<AuthController>().logout();
+                                  },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                            child: const Text('Cerrar sesión'),
                           ),
                         ],
                       ),
@@ -229,20 +243,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             );
                             return;
                           }
+                          final authController = context.read<AuthController>();
+                          final messenger = ScaffoldMessenger.of(context);
+                          final navigator = Navigator.of(context);
                           try {
-                            await context.read<AuthController>().changePassword(
+                            await authController.changePassword(
                                   currentPassword: currentPasswordController.text.trim(),
                                   newPassword: newPasswordController.text.trim(),
                                 );
                             if (mounted) {
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              navigator.pop();
+                              messenger.showSnackBar(
                                 const SnackBar(content: Text('Contraseña actualizada con éxito.')),
                               );
                             }
                           } catch (error) {
                             if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              messenger.showSnackBar(
                                 SnackBar(content: Text(error.toString())),
                               );
                             }

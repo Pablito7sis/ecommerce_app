@@ -51,7 +51,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       TextFormField(
                         controller: _usernameController,
                         decoration: const InputDecoration(labelText: 'Usuario'),
-                        validator: (value) => value?.trim().isEmpty == true ? 'Ingresa un usuario.' : null,
+                        validator: (value) {
+                          final trimmed = value?.trim() ?? '';
+                          if (trimmed.isEmpty) {
+                            return 'Ingresa un usuario.';
+                          }
+                          if (trimmed.length < 3) {
+                            return 'El usuario debe tener al menos 3 caracteres.';
+                          }
+                          if (trimmed.contains(' ')) {
+                            return 'El usuario no puede contener espacios.';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
@@ -98,6 +110,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         obscureText: !_showPassword,
                         decoration: const InputDecoration(labelText: 'Verificar contraseña'),
                         validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Confirma tu contraseña.';
+                          }
                           if (value != _passwordController.text) {
                             return 'Las contraseñas no coinciden.';
                           }
@@ -116,8 +131,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       if (!_formKey.currentState!.validate()) {
                                         return;
                                       }
+                                      final authController = context.read<AuthController>();
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      final navigator = Navigator.of(context);
                                       try {
-                                        await context.read<AuthController>().register(
+                                        await authController.register(
                                               firstName: _firstNameController.text.trim(),
                                               lastName: _lastNameController.text.trim(),
                                               username: _usernameController.text.trim(),
@@ -125,13 +143,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               password: _passwordController.text.trim(),
                                             );
                                         if (!mounted) return;
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        messenger.showSnackBar(
                                           const SnackBar(content: Text('Registro exitoso. Ya puedes iniciar sesión.')),
                                         );
-                                        Navigator.of(context).pop();
+                                        navigator.pop();
                                       } catch (error) {
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          messenger.showSnackBar(
                                             SnackBar(content: Text(error.toString())),
                                           );
                                         }

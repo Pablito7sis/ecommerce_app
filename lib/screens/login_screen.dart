@@ -122,6 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             return;
                                           }
                                           final authController = context.read<AuthController>();
+                                          final messenger = ScaffoldMessenger.of(context);
                                           try {
                                             await authController.login(
                                                   _emailController.text.trim(),
@@ -129,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 );
                                           } catch (error) {
                                             if (mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              messenger.showSnackBar(
                                                 SnackBar(
                                                   content: Text(
                                                     error.toString().contains('401')

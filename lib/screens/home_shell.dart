@@ -36,7 +36,7 @@ class _HomeShellState extends State<HomeShell> {
             children: [
               DrawerHeader(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.14),
+                  color: Theme.of(context).colorScheme.primary.withAlpha((0.14 * 255).round()),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
