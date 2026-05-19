@@ -181,7 +181,7 @@ class CartScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Esta acción simula una compra y reserva tu pedido.',
+                    'Comprar es seguro. Tus datos están protegidos y no se compartirán con terceros.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
